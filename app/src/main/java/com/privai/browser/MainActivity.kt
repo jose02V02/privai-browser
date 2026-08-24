@@ -27,9 +27,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.WHITE
 
-        session = GeckoSession(
-            createPrivateSessionSettings()
-        )
+        session = GeckoSession(createPrivateSessionSettings())
         session.open((application as PrivAIApplication).runtime)
 
         val root = LinearLayout(this).apply {
@@ -44,12 +42,17 @@ class MainActivity : Activity() {
         }
 
         urlInput = EditText(this).apply {
-            singleLine = true
+            setSingleLine(true)
             hint = "Cerca o inserisci URL"
             imeOptions = EditorInfo.IME_ACTION_GO
             setTextColor(Color.rgb(15, 23, 42))
             setHintTextColor(Color.rgb(100, 116, 139))
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            layoutParams = LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1f
+            )
+
             setOnEditorActionListener { _, actionId, _ ->
                 if (actionId == EditorInfo.IME_ACTION_GO) {
                     loadAddress(text.toString())
@@ -114,7 +117,8 @@ class MainActivity : Activity() {
 
         val url = when {
             address.startsWith("https://", ignoreCase = true) -> address
-            address.startsWith("http://", ignoreCase = true) -> address.replaceFirst("http://", "https://")
+            address.startsWith("http://", ignoreCase = true) ->
+                address.replaceFirst("http://", "https://")
             "." in address && " " !in address -> "https://$address"
             else -> "https://duckduckgo.com/?q=${Uri.encode(address)}"
         }
@@ -125,39 +129,19 @@ class MainActivity : Activity() {
 
     @SuppressLint("SetTextI18n")
     private fun summarizeCurrentPage() {
-        aiPanel.text = "PrivAI sta leggendo la pagina..."
-
-        val script = """
-            (() => {
-                const title = document.title || 'Pagina senza titolo';
-                const text = document.body ? document.body.innerText : '';
-                return JSON.stringify({
-                    title,
-                    preview: text.replace(/\s+/g, ' ').trim().slice(0, 1800)
-                });
-            })();
-        """.trimIndent()
-
-        session.evaluateJS(script).accept { result ->
-            val pageText = result?.toString().orEmpty()
-            aiPanel.text = buildMockAiAnswer(pageText)
-        }
-    }
-
-    private fun buildMockAiAnswer(pageText: String): String {
-        if (pageText.length < 80) {
-            return "PrivAI: non riesco ancora a leggere abbastanza testo da questa pagina."
-        }
-
-        return """
+        aiPanel.text = """
             PrivAI 0.1
             
-            Ho letto la pagina. In questa prima versione uso una IA simulata:
-            - posso estrarre testo dalla pagina
-            - posso preparare il riassunto
-            - posso essere collegato dopo a un modello locale o a un'API
+            Browser attivo.
             
-            Prossimo passo: sostituire questa risposta mock con un vero motore AI.
+            In questa versione iniziale:
+            - navigazione web con GeckoView
+            - modalita privata
+            - protezione anti-tracking
+            - pannello AI pronto
+            
+            Prossimo passo:
+            collegare l'estrazione del testo della pagina e un vero motore AI.
         """.trimIndent()
     }
 }
